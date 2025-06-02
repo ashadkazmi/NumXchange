@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ashad Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+      animation: fadeIn 1.5s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .calculator {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      max-width: 400px;
+      width: 100%;
+    }
+    .display {
+      width: 100%;
+      height: 60px;
+      background: #000;
+      border: none;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      text-align: right;
+      padding: 10px;
+      font-size: 1.5rem;
+      color: #0f0;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .buttons button {
+      padding: 15px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background: #333;
+      color: white;
+      transition: background 0.3s, transform 0.2s;
+      cursor: pointer;
+    }
+    .buttons button:hover {
+      background: #555;
+      transform: scale(1.05);
+    }
+    .currency-section {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 15px;
+      margin-top: 30px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    .currency-section input, .currency-section select {
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+    .currency-section button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .currency-section button:hover {
+      background: #218838;
+    }
+    .creator {
+      margin-top: 40px;
+      font-size: 0.9rem;
+      text-align: center;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <input type="text" class="display" id="display" disabled>
+    <div class="buttons">
+      <button onclick="clearDisplay()">C</button>
+      <button onclick="append('(')">(</button>
+      <button onclick="append(')')">)</button>
+      <button onclick="append('/')">/</button>
+      <button onclick="append('7')">7</button>
+      <button onclick="append('8')">8</button>
+      <button onclick="append('9')">9</button>
+      <button onclick="append('*')">*</button>
+      <button onclick="append('4')">4</button>
+      <button onclick="append('5')">5</button>
+      <button onclick="append('6')">6</button>
+      <button onclick="append('-')">-</button>
+      <button onclick="append('1')">1</button>
+      <button onclick="append('2')">2</button>
+      <button onclick="append('3')">3</button>
+      <button onclick="append('+')">+</button>
+      <button onclick="append('0')">0</button>
+      <button onclick="append('.')">.</button>
+      <button onclick="calculate()">=</button>
+      <button onclick="append('**')">^</button>
+      <button onclick="append('Math.sqrt(')">√</button>
+      <button onclick="append('Math.sin(')">sin</button>
+      <button onclick="append('Math.cos(')">cos</button>
+      <button onclick="append('Math.tan(')">tan</button>
+    </div>
+  </div>
+
+  <div class="currency-section">
+    <h3>Currency Converter</h3>
+    <input type="text" id="search" placeholder="Search currency..." oninput="filterCurrencies()">
+    <input type="number" id="amount" placeholder="Amount">
+    <select id="fromCurrency"></select>
+    <select id="toCurrency"></select>
+    <button onclick="convertCurrency()">Convert</button>
+    <p id="result"></p>
+  </div>
+
+  <div class="creator">Created by Ashad</div>
+
+  <script>
+    const display = document.getElementById('display');
+    function append(val) {
+      display.value += val;
+    }
+    function clearDisplay() {
+      display.value = '';
+    }
+    function calculate() {
+      try {
+        display.value = eval(display.value);
+      } catch {
+        display.value = 'Error';
+      }
+    }
+
+    let currencies = [];
+    async function loadCurrencies() {
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
+      const data = await res.json();
+      currencies = Object.keys(data.rates);
+      const from = document.getElementById('fromCurrency');
+      const to = document.getElementById('toCurrency');
+      from.innerHTML = to.innerHTML = '';
+      currencies.forEach(code => {
+        const opt1 = document.createElement('option');
+        const opt2 = document.createElement('option');
+        opt1.value = opt2.value = code;
+        opt1.text = opt2.text = code;
+        from.add(opt1);
+        to.add(opt2);
+      });
+    }
+
+    async function convertCurrency() {
+      const amount = parseFloat(document.getElementById('amount').value);
+      const from = document.getElementById('fromCurrency').value;
+      const to = document.getElementById('toCurrency').value;
+      if (!amount || !from || !to) return;
+      const res = await fetch(`https://open.er-api.com/v6/latest/${from}`);
+      const data = await res.json();
+      const rate = data.rates[to];
+      const result = (amount * rate).toFixed(2);
+      document.getElementById('result').innerText = `${amount} ${from} = ${result} ${to}`;
+    }
+
+    function filterCurrencies() {
+      const query = document.getElementById('search').value.toUpperCase();
+      const from = document.getElementById('fromCurrency');
+      const to = document.getElementById('toCurrency');
+      from.innerHTML = to.innerHTML = '';
+      currencies.filter(c => c.includes(query)).forEach(code => {
+        const opt1 = document.createElement('option');
+        const opt2 = document.createElement('option');
+        opt1.value = opt2.value = code;
+        opt1.text = opt2.text = code;
+        from.add(opt1);
+        to.add(opt2);
+      });
+    }
+
+    loadCurrencies();
+  </script>
+</body>
+</html>
